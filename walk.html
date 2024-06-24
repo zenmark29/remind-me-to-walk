@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walk Reminder</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            align-items: left;
+            flex-direction: column;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #walkText {
+            color: white;
+            font-size: 250%;
+            width: 7%;
+            text-align: left;
+            visibility: hidden;
+            display: block;
+            margin: 5px;
+        }
+
+        #time {
+            color: white;
+            font-size: 250%;
+            width: 7%;
+            text-align: left;
+            display: block;
+            margin: 5px;
+        }
+        #sound {
+            color: white;
+            font-size: 100%;
+            width: 20%;
+            text-align: left;
+            display: block;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="prepare" src="./Preparetowalk.m4a" preload="auto"></audio>
+    <audio id="walk" src="./StartWalking.m4a" preload="auto"></audio>
+    <audio id="complete" src="./Walkcomplete.m4a" preload="auto"></audio>
+    <div id="sound">Enable Sound
+        <input type="checkbox" id="enableSound">
+    </div>
+    <div id="walkText">WALK</div>
+    <div id="time"></div>
+    <script>
+        var countDisplays = 0;
+        var walkText = document.getElementById('walkText');
+        var time = document.getElementById('time');
+        var currentSecond = 0;
+        var prepare = true;
+        var walk = true;
+        var complete = true;
+
+        /*
+         If the sound is enabled and we are at the prepare stage, play the sound
+         and toggle prepare to false. Toggle walk to true so that sound will play next.
+        */
+        function prepareFunc() {
+            if (prepare && document.getElementById('enableSound').checked) {
+                document.getElementById('prepare').play();
+                prepare = false;
+                walk = true; // enable the walk sound
+            }
+        }
+
+        /*
+        If the sound is enabled and we aer at the walk stage, play the sound
+        and toggle walk to false. Toggle complete to true so that sound will play next.
+        */
+        function walkFunc() {
+            if (walk && document.getElementById('enableSound').checked) {
+                document.getElementById('walk').play();
+                walk = false;
+                complete = true; //enable the completion sound
+            }
+        }
+
+        /*
+        If the sound is enabled and we are at the complete stage, play the sound and toggle
+        complete to false. Toggle prepare to true so that sound will play next.
+        */
+        function completeFunc() {
+            if (complete && document.getElementById('enableSound').checked) {
+                document.getElementById('complete').play();
+                complete = false;
+                prepare = true; // enable the prepare sound
+            }
+        }
+
+        /*
+        Make the word WALK flash on the screen.
+        */
+        function flashWalk() {
+            remainder = currentSecond % 3;
+            if (remainder === 0) {
+                walkText.style.visibility = 'hidden'
+            } else {
+                walkText.style.visibility = 'visible'
+            }
+        }
+
+        /*
+        Display the time and activate messages and sounds (if enabled) so it will be easier
+        for me to track when to walk.
+        */
+        function checkTime() {
+            var currentTime = new Date();
+            var currentHour = currentTime.getHours();
+            var currentMinute = currentTime.getMinutes();
+            currentSecond = currentTime.getSeconds();
+            var flashyDot = "  |";
+
+            flashyDot = currentSecond % 2 === 0 ? "  |" : "--";
+            fixTheMinutes = currentMinute < 10 ? ":0" : ":";
+            fixTheSeconds = currentSecond < 10 ? ":0" : ":";
+
+            time.innerText = currentHour + fixTheMinutes + currentMinute + fixTheSeconds + currentSecond;
+            //I don't want this starting too early or lasting too late. So, 8am to 5pm.
+            if (currentHour >= 7 && currentHour < 17) {
+                if ((currentMinute >= 25 && currentMinute <= 29) || (currentMinute >= 55)) {
+                    walkText.innerText = 'WALK'
+                    walkFunc();
+                    walkText.style.visibility = 'hidden';
+                    flashWalk();
+                } else if (currentMinute === 30 || currentMinute === 0) {
+                    walkText.innerText = 'Walk complete.'
+                    completeFunc();
+                    walkText.style.visibility = 'visible';
+                } else if (currentMinute === 24 || currentMinute === 54) {
+                    walkText.innerText = 'Prepare to walk.'
+                    prepareFunc();
+                    walkText.style.visibility = 'visible';
+                } else {
+                    walkText.style.visibility = 'hidden';
+                }
+            } else {
+                walkText.style.visibility = 'hidden';
+            }
+        }
+
+        // Check the time every second
+        setInterval(checkTime, 1000);
+    </script>
+</body>
+
+</html>
